@@ -1,18 +1,49 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
-// import { ArrowLeft } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import api from "@/lib/api"
+import Cookies from "js-cookie"
 
 export default function LoginPage() {
   const router = useRouter()
+  const [formData, setFormData] = useState({
+      username: '',
+      password: ''
+  })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // In a real app, you would validate credentials here
-    router.push("/dashboard")
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData({ ...formData, [e.target.id]: e.target.value })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+      setError('')
+      setLoading(true)
+      
+      try {
+        const response = await api.post('token/', {
+            username: formData.username,
+            password: formData.password
+        });
+        
+        // Save tokens
+        Cookies.set('accessToken', response.data.access, { expires: 1/24 }); // 1 hour
+        Cookies.set('refreshToken', response.data.refresh, { expires: 1 });  // 1 day
+        
+        // Redirect
+        router.push("/dashboard")
+      } catch (err: any) {
+          console.error(err);
+          setError("Login failed. Please check your credentials.")
+      } finally {
+          setLoading(false)
+      }
   }
 
   return (
@@ -21,32 +52,40 @@ export default function LoginPage() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
           <p className="text-sm text-center text-slate-500">
-            Enter your email to sign in to your organization account
+            Enter your username and password to access your account
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">{error}</div>}
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Email</label>
+              <label htmlFor="username" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Username</label>
               <input
-                id="email"
-                placeholder="name@example.com"
-                type="email"
+                id="username"
+                placeholder="Ex: admin"
+                type="text"
                 className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={formData.username}
+                onChange={handleChange}
+                required
               />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                   <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Password</label>
-                  <Link href="#" className="text-xs text-blue-600 hover:underline">Forgot password?</Link>
               </div>
               <input
                 id="password"
                 type="password"
                 className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={formData.password}
+                onChange={handleChange}
+                required
               />
             </div>
-            <Button className="w-full" type="submit">Sign In</Button>
+            <Button className="w-full" type="submit" disabled={loading}>
+                {loading ? "Signing In..." : "Sign In"}
+            </Button>
           </form>
           
           <div className="relative">
@@ -58,8 +97,8 @@ export default function LoginPage() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-             <Button variant="outline">Google</Button>
-             <Button variant="outline">Microsoft</Button>
+             <Button variant="outline" disabled>Google</Button>
+             <Button variant="outline" disabled>Microsoft</Button>
           </div>
         </CardContent>
         <CardFooter className="justify-center">

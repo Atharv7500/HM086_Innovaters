@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -17,9 +18,20 @@ router.register(r'collaboration-requests', CollaborationRequestViewSet)
 router.register(r'milestones', MilestoneViewSet)
 router.register(r'impact-metrics', ImpactMetricViewSet)
 
+def root_view(request):
+    return JsonResponse({
+        "message": "SDG Collaboration Platform API is running",
+        "endpoints": {
+            "admin": "/admin/",
+            "api": "/api/",
+            "docs": "Refer to README.md"
+        }
+    })
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('', root_view),
 ]

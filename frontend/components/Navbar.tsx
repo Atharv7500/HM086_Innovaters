@@ -21,6 +21,9 @@ export function Navbar() {
             <Link href="/about" className="transition-colors hover:text-slate-900/80 text-slate-900/60">
               About Goals
             </Link>
+            <Link href="/dashboard" className="transition-colors hover:text-slate-900/80 text-slate-900/60">
+              Dashboard
+            </Link>
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end pr-4 sm:pr-8 lg:pr-16">
